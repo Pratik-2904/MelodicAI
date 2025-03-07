@@ -3,12 +3,22 @@ import 'dart:convert';
 import 'package:client/core/constants/server_const.dart';
 import 'package:client/core/failure/failure.dart';
 import 'package:client/features/auth/model/usermodel.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:http/http.dart' as http;
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'auth_remote_repository.g.dart';
 
 // final baseurl = 'http://127.0.0.1:8000';
 final baseurl = ServerConst.serverbaseUrl;
 final authurl = '$baseurl/auth';
+
+@riverpod
+AuthRemoteRepository authRemoteRepository(Ref ref) {
+  //provider of authRemoteRepository
+  return AuthRemoteRepository();
+}
 
 class AuthRemoteRepository {
   Future<Either<Failure, Usermodel>> login({
