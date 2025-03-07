@@ -4,11 +4,14 @@ from fastapi import APIRouter, Depends, FastAPI, File, Form, UploadFile
 from sqlalchemy.orm import Session
 from database import get_db
 from middleware.auth_middleware import auth_middleware
-import claudinary_config  # Import the Cloudinary configuration
+
+from routes.configuration import claudinary_config
 
 from models.song import Song
 
 router = APIRouter()
+
+claudinary_config()
 
 @router.post("/upload", status_code=201)
 def upload_Song(

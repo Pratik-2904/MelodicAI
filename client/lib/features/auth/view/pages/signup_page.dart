@@ -1,6 +1,7 @@
 import 'package:client/core/theme/pallate.dart';
 import 'package:client/core/utils.dart';
 import 'package:client/core/widgets/custom_field.dart';
+import 'package:client/features/auth/repository/auth_remote_repository.dart';
 import 'package:client/features/auth/view/pages/login_page.dart';
 import 'package:client/features/auth/view/widgets/auth_gradient_button.dart';
 import 'package:flutter/material.dart';
@@ -13,11 +14,18 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
-  
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final formKey = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +57,17 @@ class _SignupPageState extends State<SignupPage> {
                 buttonText: 'Sign up',
                 onTap: () async {
                   if (formKey.currentState!.validate()) {
-                   //TODO: Implement signup logic
+                    //TODO: Implement signup logic
+                    final res = await AuthRemoteRepository().signup(
+                      name: nameController.text,
+                      email: emailController.text,
+                      password: passwordController.text,
+                    );
+                    res.fold(
+                      (l) => showSnackBar(context, "${l.message}:${l.statusCode ?? '404'}"),
+                      (r) =>
+                          showSnackBar(context, 'User created successfully!'),
+                    );
                   } else {
                     showSnackBar(context, 'Missing fields!');
                   }

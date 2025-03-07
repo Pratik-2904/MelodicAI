@@ -1,6 +1,7 @@
 import 'package:client/core/theme/pallate.dart';
 import 'package:client/core/utils.dart';
 import 'package:client/core/widgets/custom_field.dart';
+import 'package:client/features/auth/repository/auth_remote_repository.dart';
 import 'package:client/features/auth/view/pages/signup_page.dart';
 import 'package:client/features/auth/view/widgets/auth_gradient_button.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +18,13 @@ class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final formKey = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +55,10 @@ class _LoginPageState extends State<LoginPage> {
                 onTap: () async {
                   if (formKey.currentState!.validate()) {
                     //TODO: Implement login logic
+                    await AuthRemoteRepository().login(
+                      email: emailController.text,
+                      password: passwordController.text,
+                    );
 
                   } else {
                     showSnackBar(context, 'Missing fields!');
