@@ -4,25 +4,15 @@ from fastapi import APIRouter, Depends, FastAPI, File, Form, UploadFile
 from sqlalchemy.orm import Session
 from database import get_db
 from middleware.auth_middleware import auth_middleware
-import cloudinary
+import claudinary_config  # Import the Cloudinary configuration
 
 from models.song import Song
 
 router = APIRouter()
 
-cloudinary.config(
-    cloud_name="dzmqbmgqc",
-    api_key="453329355371866",
-    api_secret="rK06QhaPdgDQPGJtc60wu8a2jVg",  # Click 'View API Keys' above to copy your API secret
-    secure=True,
-)
-
-
 @router.post("/upload", status_code=201)
 def upload_Song(
-    song: UploadFile = File(
-        ...
-    ),  # as the file needs to be uploaded argument should not be query but the file thus Type Upload file
+    song: UploadFile = File(...),  # as the file needs to be uploaded argument should not be query but the file thus Type Upload file
     thumbnail: UploadFile = File(...),
     artist: str = Form(...),  # here the values are taken from the formm thus form
     song_name: str = Form(...),  # triple dot specify that the fields are required
