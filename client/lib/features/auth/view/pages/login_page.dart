@@ -14,7 +14,6 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final formKey = GlobalKey<FormState>();
@@ -55,11 +54,15 @@ class _LoginPageState extends State<LoginPage> {
                 onTap: () async {
                   if (formKey.currentState!.validate()) {
                     //TODO: Implement login logic
-                    await AuthRemoteRepository().login(
+                    final res = await AuthRemoteRepository().login(
                       email: emailController.text,
                       password: passwordController.text,
                     );
-
+                    print(res);
+                    res.fold(
+                      (l) => showSnackBar(context, l.message),
+                      (r) => showSnackBar(context, 'Login Successful'),
+                    );
                   } else {
                     showSnackBar(context, 'Missing fields!');
                   }

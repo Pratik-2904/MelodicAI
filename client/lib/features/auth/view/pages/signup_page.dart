@@ -5,6 +5,7 @@ import 'package:client/features/auth/repository/auth_remote_repository.dart';
 import 'package:client/features/auth/view/pages/login_page.dart';
 import 'package:client/features/auth/view/widgets/auth_gradient_button.dart';
 import 'package:flutter/material.dart';
+import 'package:fpdart/fpdart.dart' as fp;
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -63,8 +64,15 @@ class _SignupPageState extends State<SignupPage> {
                       email: emailController.text,
                       password: passwordController.text,
                     );
+                    final val = switch(res){
+                      fp.Left(value : final l) => l,
+                      fp.Right(value:final r) => r,
+                    };
+
+                    print(val);
+                    
                     res.fold(
-                      (l) => showSnackBar(context, "${l.message}:${l.statusCode ?? '404'}"),
+                      (l) => showSnackBar(context, l.message.toString()),
                       (r) =>
                           showSnackBar(context, 'User created successfully!'),
                     );

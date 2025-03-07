@@ -1,15 +1,17 @@
 import 'dart:convert';
 
+import 'package:client/core/constants/server_const.dart';
 import 'package:client/core/failure/failure.dart';
 import 'package:client/features/auth/model/usermodel.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:http/http.dart' as http;
 
-final baseurl = 'http://127.0.0.1:8000';
+// final baseurl = 'http://127.0.0.1:8000';
+final baseurl = ServerConst.serverbaseUrl;
 final authurl = '$baseurl/auth';
 
 class AuthRemoteRepository {
-  Future<Either<Failure, Map<String, dynamic>>> login({
+  Future<Either<Failure, Usermodel>> login({
     required String email,
     required String password,
   }) async {
@@ -17,15 +19,16 @@ class AuthRemoteRepository {
       final response = await http.post(
         Uri.parse('$authurl/login'),
         headers: {'Content-Type': 'application/json'},
-
         body: jsonEncode({'email': email, 'password': password}),
       );
-      if (response.statusCode != 201) {
-        //handle the excepetion
-        return left(Failure(response.body, response.statusCode.toString()));
-      }
+
       final res = jsonDecode(response.body) as Map<String, dynamic>;
-      return right(res);
+      if (response.statusCode != 200) {
+        //handle the excepetion
+        // return left(Failure(response.body, response.statusCode.toString()));
+        return left(Failure(res['detail'] as String));
+      }
+      return right(Usermodel.fromMap(res['user']));
     } catch (e) {
       return left(Failure(e.toString()));
     }
@@ -39,25 +42,18 @@ class AuthRemoteRepository {
     try {
       final res = await http.post(
         Uri.parse('$authurl/signup'),
-        headers: {
-          'Content-Type': 'application/json',
-        }, 
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'name': name, 'email': email, 'password': password}),
       );
       final user = jsonDecode(res.body) as Map<String, dynamic>;
-      
-      print(user);
 
       if (res.statusCode != 201) {
+        final errorMessage = user['detail'] is List;
         // {"detail" : Error Message} but i dont want this i want only the error message
-        return left(Failure(user['detail'], res.statusCode.toString()));
+        return left(Failure(user['detail'] as String));
       }
-      
-      return right(Usermodel(
-        name: user['name'],
-        email: user['email'],
-        id: user['id'],
-      ));
 
+      return right(Usermodel.fromJson(res.body));
     } catch (e) {
       return left(Failure(e.toString()));
     }
