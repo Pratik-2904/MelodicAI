@@ -1,3 +1,5 @@
+import 'package:client/core/theme/theme.dart';
+import 'package:client/features/auth/view/pages/signup_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -12,10 +14,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Melodic',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: Placeholder(),
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.darkThemeMode,
+      home: SignupPage(),
     );
   }
 }
