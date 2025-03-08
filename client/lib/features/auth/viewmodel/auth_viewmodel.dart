@@ -1,4 +1,6 @@
-import 'package:client/features/auth/model/usermodel.dart';
+import 'package:client/core/model/usermodel.dart';
+import 'package:client/core/providers/current_user_notifier.dart';
+import 'package:client/features/auth/repository/auth_local_repository.dart';
 import 'package:client/features/auth/repository/auth_remote_repository.dart';
 import 'package:fpdart/fpdart.dart' as fp;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -14,7 +16,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 // // as notifier provides the "ref" property which is used to access the provider and the "state" property which is used to access the state of the provider inbuilt
 //   @override
 //   build() { // this is a function used to initialize the notifier
-//     // TODO: implement build
+//     //  implement build
 //     throw UnimplementedError();
 //   }
 
@@ -31,14 +33,23 @@ class AuthViewModel extends _$AuthViewModel {
   //make sure you are in your project directory //check at 3:21
 
   late AuthRemoteRepository _authRemoteRepository;
+  late AuthLocalRepository _authLocalRepository;
+  late CurrentUserNotifier _currentUserNotifier;
 
   @override
   AsyncValue<Usermodel>? build() {
     _authRemoteRepository = ref.watch(
       authRemoteRepositoryProvider,
     ); // initializing the AuthRemoteRepository class
+    _authLocalRepository = ref.watch(authLocalRepositoryProvider);
+    _currentUserNotifier = ref.watch(currentUserNotifierProvider.notifier);
+
     // async method contains 3 values: loading, data, error , thats what we need
     return null; // intializing the usermodel with null as the value od usermodel cant be there without signup and login method
+  }
+
+  Future<void> initSharedPreferences() async {
+    await _authLocalRepository.init();
   }
 
   Future<void> signupUser({
@@ -47,7 +58,7 @@ class AuthViewModel extends _$AuthViewModel {
     required String password,
   }) async {
     state = AsyncValue.loading();
-    final res = await _authRemoteRepository.signup(
+    final res = await _authRemoteRepository.signUp(
       name: name,
       email: email,
       password: password,
@@ -72,16 +83,58 @@ class AuthViewModel extends _$AuthViewModel {
     required String password,
   }) async {
     state = AsyncValue.loading();
-    final user = await _authRemoteRepository.login(
+    final res = await _authRemoteRepository.login(
       email: email,
       password: password,
     );
 
-    final value = user.fold(
-      (l) => state = AsyncValue.error(l.message, StackTrace.current),
-      (r) => state = AsyncValue.data(r),
-    );
-    print(state);
-    print(value);
+    final val = switch (res) {
+      fp.Left(value: final l) =>
+        state = AsyncValue.error(
+          l.message,
+          StackTrace.current,
+        ), // this initializes the state with an error message on the current stacktrace
+      fp.Right(value: final r) => _loginSuccess(
+        r,
+      ), // this initializes the state with the data of user
+    };
+    print(val);
+  }
+
+  AsyncValue<Usermodel>? _loginSuccess(Usermodel user) {
+    _authLocalRepository.setToken(user.token);
+    _currentUserNotifier.addUser(user);
+    // _currentUserNotifier.addUser(user);
+    return state = AsyncValue.data(user);
+  }
+
+  Future<Usermodel?> getData() async {
+    state = AsyncValue.loading();
+    final token = _authLocalRepository.getToken();
+
+    if (token != null) {
+      final res = await _authRemoteRepository.getUser(token);
+
+      final val = switch (res) {
+        fp.Left(value: final l) =>
+          state = AsyncValue.error(
+            l.message,
+            StackTrace.current,
+          ), // this initializes the state with an error message on the current stacktrace
+        fp.Right(value: final r) => _currentUserSuccess(r),
+      };
+      return val.value;
+    }
+    return null;
+  }
+
+  Future<void> logout() async {
+    _authLocalRepository.setToken(null);
+    _currentUserNotifier.removeUser();
+  }
+
+  AsyncValue<Usermodel> _currentUserSuccess(Usermodel user) {
+    _currentUserNotifier.addUser(user);
+    return state = AsyncValue.data(user);
   }
 }

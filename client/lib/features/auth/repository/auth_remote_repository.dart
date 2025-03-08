@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:client/core/constants/server_const.dart';
 import 'package:client/core/failure/failure.dart';
-import 'package:client/features/auth/model/usermodel.dart';
+import 'package:client/core/model/usermodel.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:http/http.dart' as http;
@@ -38,13 +38,15 @@ class AuthRemoteRepository {
         // return left(Failure(response.body, response.statusCode.toString()));
         return left(Failure(res['detail'] as String));
       }
-      return right(Usermodel.fromMap(res['user']));
+      return right(
+        Usermodel.fromMap(res['user']).copyWith(token: res['token']),
+      );
     } catch (e) {
       return left(Failure(e.toString()));
     }
   }
 
-  Future<Either<Failure, Usermodel>> signup({
+  Future<Either<Failure, Usermodel>> signUp({
     required String name,
     required String email,
     required String password,
@@ -58,12 +60,32 @@ class AuthRemoteRepository {
       final user = jsonDecode(res.body) as Map<String, dynamic>;
 
       if (res.statusCode != 201) {
-        final errorMessage = user['detail'] is List;
+        // final errorMessage = user['detail'] is List;
         // {"detail" : Error Message} but i dont want this i want only the error message
         return left(Failure(user['detail'] as String));
       }
 
       return right(Usermodel.fromJson(res.body));
+    } catch (e) {
+      return left(Failure(e.toString()));
+    }
+  }
+
+  Future<Either<Failure, Usermodel>> getUser(String token) async {
+    try {
+      final res = await http.get(
+        Uri.parse('$authurl/'),
+        headers: {'Content-Type': 'application/json', 'x-auth-token': token},
+      );
+
+      final val = jsonDecode(res.body) as Map<String, dynamic>;
+
+      if (res.statusCode != 200) {
+        return left(Failure(val['detail']));
+      }
+
+      final user = Usermodel.fromJson(res.body).copyWith(token: token);
+      return right(user);
     } catch (e) {
       return left(Failure(e.toString()));
     }
